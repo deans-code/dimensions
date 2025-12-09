@@ -15,10 +15,14 @@ It was designed as a simple tool for testing the capabilities of embeddings when
 - [x] Integrate local language model.
 - [x] Integrate local vector database.
 - [x] Provide search function.
+- [ ] Apply normalisation to embeddings .
+- [ ] Implement basic chunking, use markdown format for input.
+- [ ] Implement contextualisation, use alternative local LLM.
 
 ## :telescope: Future Gazing
 
 - [ ] Explore capabilities of the Qdrant vector database, understand how search queries can be adjusted to affect results. 
+- [ ] Consider adding a lexical search option for comparing results.
 
 ## :beetle: Known defects
 
