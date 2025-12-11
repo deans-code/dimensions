@@ -52,45 +52,50 @@ public sealed class Embeddings : IDisposable
         }
 
         var chunks = new List<string>();
-        var lines = markdownContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+        string[] lines = markdownContent.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries);
+        
         var currentChunk = new List<string>();
 
-        foreach (var line in lines)
+        foreach (string line in lines)
         {
-            // Check if line is a heading (starts with #)
-            if (line.TrimStart().StartsWith("#"))
+            if (StartNewChunk(currentChunk, line))
             {
-                // If we have accumulated content, save it as a chunk
-                if (currentChunk.Count > 0)
-                {
-                    var chunk = string.Join(Environment.NewLine, currentChunk).Trim();
-                    if (!string.IsNullOrWhiteSpace(chunk))
-                    {
-                        chunks.Add(chunk);
-                    }
-                    currentChunk.Clear();
-                }
+                FinaliseChunk(chunks, currentChunk);
+
+                currentChunk.Clear();
             }
 
             currentChunk.Add(line);
         }
-
-        // Add the last chunk if there's any content
+        
         if (currentChunk.Count > 0)
         {
-            var chunk = string.Join(Environment.NewLine, currentChunk).Trim();
-            if (!string.IsNullOrWhiteSpace(chunk))
-            {
-                chunks.Add(chunk);
-            }
+            FinaliseChunk(chunks, currentChunk);
         }
 
         return chunks;
     }
 
-    public async Task CreateEmbeddingsAsync()
+    private void FinaliseChunk(List<string> chunks, List<string> currentChunk)
     {
-        // Check if the embedding service is available before proceeding
+        var finalisedChunk = string.Join(Environment.NewLine, currentChunk).Trim();
+
+        if (!string.IsNullOrWhiteSpace(finalisedChunk))
+        {
+            chunks.Add(finalisedChunk);
+        }
+    }
+
+    private bool StartNewChunk(List<string> currentChunk, string line)
+        => IsHeading(line) && ChunkHasContent(currentChunk);    
+
+    private bool ChunkHasContent(List<string> currentChunk) => currentChunk.Count > 0;    
+
+    private bool IsHeading(string line) => line.TrimStart().StartsWith("#");    
+
+    public async Task CreateEmbeddingsAsync()
+    {        
         await _embeddingGeneration.CheckAvailabilityAsync();
 
         Dictionary<string, string> data = await _rawDataLoader.LoadAllTxtFilesAsync();
@@ -102,23 +107,20 @@ public sealed class Embeddings : IDisposable
 
         await _vectorStorage.CreateCollectionAsync();
 
-        var keys = new List<string>(data.Keys);
+        var documentNames = new List<string>(data.Keys);
         ulong pointId = 1;
 
-        for (int i = 0; i < keys.Count; i++)
+        for (int i = 0; i < documentNames.Count; i++)
         {
-            var key = keys[i];
-            string value = data[key];
+            string documentName = documentNames[i];
 
-            // Chunk the markdown content by headings
+            string value = data[documentName];
+            
             List<string> chunks = ChunkMarkdownByHeadings(value);
 
-            // Process each chunk separately
-            foreach (var chunk in chunks)
-            {
-                // Skip chunks that only contain a header (no content after the heading line)
-                var lines = chunk.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                if (lines.Length <= 1 && lines.Any(l => l.TrimStart().StartsWith("#")))
+            foreach (string chunk in chunks)
+            {                
+                if (IsOnlyHeading(chunk))
                 {
                     continue;
                 }
@@ -126,11 +128,19 @@ public sealed class Embeddings : IDisposable
                 AugmentedEmbedding augmentedEmbedding = await _embeddingGeneration.GetEmbeddingAsync(chunk);
 
                 await _vectorStorage.StoreVectorsAsync(augmentedEmbedding, pointId);
+
                 pointId++;
             }
         }
     }
-    
+
+    private static bool IsOnlyHeading(string chunk)
+    {
+        string[] lines = chunk.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries);
+
+        return lines.Length <= 1 && lines.Any(l => l.TrimStart().StartsWith("#"));    
+    }
+
     public async Task DeleteEmbeddingsAsync()
     {
         await _vectorStorage.DeleteCollectionAsync();

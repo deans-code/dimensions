@@ -83,7 +83,7 @@ public sealed class EmbeddingGeneration : IDisposable
                     $"Failed to generate embedding. Status code: {response.StatusCode}. " +
                     "Please ensure the embedding model is running.");
             }
-            
+
             string responseJson = await response.Content.ReadAsStringAsync();
 
             EmbeddingResponse? embedding = JsonSerializer.Deserialize<EmbeddingResponse>(responseJson);
@@ -93,29 +93,13 @@ public sealed class EmbeddingGeneration : IDisposable
                 throw new InvalidOperationException("Failed to deserialize embedding response.");
             }
 
-            // Normalize the embedding vector
-            if (embedding.Data.Count > 0 && embedding.Data[0].Embedding.Count > 0)
-            {
-                var vector = embedding.Data[0].Embedding;
-                
-                // Calculate L2 norm (magnitude)
-                double magnitude = Math.Sqrt(vector.Sum(x => x * x));
-                
-                // Normalize by dividing each component by the magnitude
-                if (magnitude > 0)
-                {
-                    for (int i = 0; i < vector.Count; i++)
-                    {
-                        vector[i] = vector[i] / magnitude;
-                    }
-                }
-            }
+            Normalise(embedding);
 
             return new AugmentedEmbedding
             {
                 Text = inputText,
                 Embedding = embedding,
-            };                        
+            };
         }
         catch (HttpRequestException ex)
         {
@@ -127,6 +111,37 @@ public sealed class EmbeddingGeneration : IDisposable
         {
             throw new InvalidOperationException(
                 $"Error getting embedding: {ex.Message}", ex);
+        }
+    }
+
+    private static void Normalise(EmbeddingResponse embedding)
+    {        
+        if (embedding.Data.Count > 0 && embedding.Data[0].Embedding.Count > 0)
+        {
+            var vector = embedding.Data[0].Embedding;
+
+            // AI generated description of how magnitude is calculated:
+            // Calculate L2 norm (magnitude): ||v|| = √(v₁² + v₂² + ... + vₙ²)
+            // This is the Euclidean length of the vector - the straight-line distance
+            // from the origin to the point represented by the vector in n-dimensional space.
+            // For example, in 3D: ||[3,4,0]|| = √(9+16+0) = 5
+            double magnitude = Math.Sqrt(vector.Sum(x => x * x));
+
+            // Each value in the embedding vector is divided by the magnitude.
+            if (magnitude > 0)
+            {
+                for (int i = 0; i < vector.Count; i++)
+                {
+                    vector[i] = vector[i] / magnitude;
+                }
+            }
+
+            // AI generated description of why normalisation per embedding is done:
+            // Normalize each embedding individually (L2/unit-length) when you want cosine/angle-based similarity.
+            // Cosine similarity compares directions, not magnitudes; L2-normalising each vector makes 
+            // cosine = dot-product of unit vectors and preserves relative directions. 
+            // Global (dataset-wide) normalization would distort per-vector directions and is 
+            // not used for similarity search.
         }
     }
 }
