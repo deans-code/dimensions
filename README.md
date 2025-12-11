@@ -10,7 +10,7 @@ This application:
 It was designed as a simple tool for testing the capabilities of embeddings when used as part of semantic search use cases.
 
 > [!NOTE]
-> See scope for current planned activities, further work is required before the tool produces useful results.
+> Search results are improving, further work required to improve relevance of results.
 
 ## :white_check_mark: Scope
 
@@ -18,8 +18,9 @@ It was designed as a simple tool for testing the capabilities of embeddings when
 - [x] Integrate local language model.
 - [x] Integrate local vector database.
 - [x] Provide search function.
-- [ ] Apply normalisation to embeddings (in progress).
-- [ ] Implement basic chunking, use markdown format for input (in progress).
+- [x] Apply normalisation to embeddings.
+- [x] Implement basic chunking, use markdown format for input.
+- [ ] Test with alternative embeddings model.
 - [ ] Implement contextualisation, use alternative local LLM.
 
 ## :telescope: Future Gazing

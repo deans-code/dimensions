@@ -8,16 +8,18 @@ public sealed class EmbeddingGeneration : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
+    private readonly string? _model;
     private bool _disposed = false;
 
     public EmbeddingGeneration(
         string protocol,
         string host,
-        int port)
+        int port,
+        string model)
     {
         _httpClient = new HttpClient();
-
         _baseUrl = $"{protocol}://{host}:{port}";
+        _model = model;
     }
 
     public void Dispose()
@@ -69,7 +71,9 @@ public sealed class EmbeddingGeneration : IDisposable
     {
         try
         {
-            object requestBody = new { input = inputText };
+            var requestBody = new Dictionary<string, object?> { ["input"] = inputText };
+            
+            if (!string.IsNullOrEmpty(_model)) requestBody["model"] = _model;
 
             string json = JsonSerializer.Serialize(requestBody);
 
@@ -114,7 +118,7 @@ public sealed class EmbeddingGeneration : IDisposable
         }
     }
 
-    private static void Normalise(EmbeddingResponse embedding)
+    private void Normalise(EmbeddingResponse embedding)
     {        
         if (embedding.Data.Count > 0 && embedding.Data[0].Embedding.Count > 0)
         {

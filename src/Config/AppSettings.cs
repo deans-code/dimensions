@@ -12,6 +12,7 @@ public sealed class EmbeddingApiSettings
     public string Protocol { get; set; } = string.Empty;
     public string Host { get; set; } = string.Empty;
     public int Port { get; set; } = 0;
+    public string Model { get; set; } = string.Empty;
 }
 
 public sealed class VectorDatabaseSettings

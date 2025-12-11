@@ -41,7 +41,8 @@ public sealed class Program
                             return new EmbeddingGeneration(
                                 settings.EmbeddingApi.Protocol,
                                 settings.EmbeddingApi.Host,
-                                settings.EmbeddingApi.Port);
+                                settings.EmbeddingApi.Port,
+                                settings.EmbeddingApi.Model);
                         });
 
                         _ = services.AddSingleton(provider =>

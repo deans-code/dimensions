@@ -134,7 +134,7 @@ public sealed class Embeddings : IDisposable
         }
     }
 
-    private static bool IsOnlyHeading(string chunk)
+    private bool IsOnlyHeading(string chunk)
     {
         string[] lines = chunk.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries);
 
