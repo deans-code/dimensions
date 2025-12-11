@@ -43,7 +43,29 @@ public sealed class EmbeddingGeneration : IDisposable
         Dispose(false);
     }
 
-    public async Task<AugmentedEmbedding?> GetEmbeddingAsync(string inputText)
+    public async Task CheckAvailabilityAsync()
+    {
+        try
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync($"{_baseUrl}/v1/models");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"Embedding service is not available at {_baseUrl}. " +
+                    $"Status code: {response.StatusCode}. " +
+                    "Please ensure the embedding model is running.");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException(
+                $"Cannot connect to embedding service at {_baseUrl}. " +
+                "Please ensure the embedding model is running.", ex);
+        }
+    }
+
+    public async Task<AugmentedEmbedding> GetEmbeddingAsync(string inputText)
     {
         try
         {
@@ -55,13 +77,39 @@ public sealed class EmbeddingGeneration : IDisposable
 
             HttpResponseMessage response = await _httpClient.PostAsync($"{_baseUrl}/v1/embeddings", content);
 
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to generate embedding. Status code: {response.StatusCode}. " +
+                    "Please ensure the embedding model is running.");
+            }
             
             string responseJson = await response.Content.ReadAsStringAsync();
 
             EmbeddingResponse? embedding = JsonSerializer.Deserialize<EmbeddingResponse>(responseJson);
 
-            if (embedding == null) return null;
+            if (embedding == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize embedding response.");
+            }
+
+            // Normalize the embedding vector
+            if (embedding.Data.Count > 0 && embedding.Data[0].Embedding.Count > 0)
+            {
+                var vector = embedding.Data[0].Embedding;
+                
+                // Calculate L2 norm (magnitude)
+                double magnitude = Math.Sqrt(vector.Sum(x => x * x));
+                
+                // Normalize by dividing each component by the magnitude
+                if (magnitude > 0)
+                {
+                    for (int i = 0; i < vector.Count; i++)
+                    {
+                        vector[i] = vector[i] / magnitude;
+                    }
+                }
+            }
 
             return new AugmentedEmbedding
             {
@@ -69,11 +117,16 @@ public sealed class EmbeddingGeneration : IDisposable
                 Embedding = embedding,
             };                        
         }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException(
+                $"Cannot connect to embedding service at {_baseUrl}. " +
+                "Please ensure the embedding model is running.", ex);
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error getting embedding: {ex.Message}");
-
-            return null;
+            throw new InvalidOperationException(
+                $"Error getting embedding: {ex.Message}", ex);
         }
     }
 }

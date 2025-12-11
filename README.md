@@ -18,8 +18,8 @@ It was designed as a simple tool for testing the capabilities of embeddings when
 - [x] Integrate local language model.
 - [x] Integrate local vector database.
 - [x] Provide search function.
-- [ ] Apply normalisation to embeddings.
-- [ ] Implement basic chunking, use markdown format for input.
+- [ ] Apply normalisation to embeddings (in progress).
+- [ ] Implement basic chunking, use markdown format for input (in progress).
 - [ ] Implement contextualisation, use alternative local LLM.
 
 ## :telescope: Future Gazing
@@ -157,6 +157,9 @@ The application is configured to load within the integrated terminal, you should
 Select the appropriate option from the menu to load your data and populate your vector database.
 
 Select the search option to test queries against your populated vector database.
+
+You can view the content of your vector database using the following URL: 
+http://localhost:6333/dashboard
 
 ## :wave: Contributing
 
