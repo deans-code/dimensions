@@ -132,15 +132,12 @@ E.g. update the models names as required:
 
 ```json
 {
-  "EmbeddingApi": {
-    ...
+  "EmbeddingApi": {    
     "Model": "text-embedding-embeddinggemma-300m"
   },
-  "ChatCompletionApi": {
-    ...
+  "ChatCompletionApi": {    
     "Model": "openai/gpt-oss-120b"
-  },
-  ...
+  },  
 }
 ```
 
@@ -152,10 +149,8 @@ The data under test can be configured. The software is designed to use your chos
 The system is configured to use the `game-historian.md` system prompt when generating archival data. You may choose to write an alternative system prompt for generating archival data. If you do, update the configuration with the new prompt location:
 
 ```json
-{
-    ...
-    "SystemPromptPath": ...,
-    ...
+{    
+    "SystemPromptPath": "path/to/system-prompt.md",    
 }
 ```
 
@@ -171,11 +166,11 @@ Related settings:
 {
   "Contextualisation": {
     "ContextSectionChunkTitles": [
-      ...
+      // A list of titles, see system prompt for expected titles.
     ]
   },
   "ArchivalTopics": [
-    ...
+    // A list of topics related to the chosen system prompt.
   ]
 }
 ```
