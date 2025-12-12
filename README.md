@@ -2,12 +2,22 @@
 
 ## :movie_camera: Background
 
-This application:
-- generates embeddings using a local language model,
-- stores those embeddings within a vector database 
-- supports the querying of that data.
+As per [Google's definition](https://cloud.google.com/discover/what-is-semantic-search):
 
-It was designed as a simple tool for testing the capabilities of embeddings when used as part of semantic search use cases.
+> Semantic search is a data searching technique that focuses on understanding the contextual meaning and intent behind a user’s search query, rather than only matching keywords. 
+
+This application was designed as a simple tool for testing the capabilities of embeddings when used as part of semantic search use cases.
+
+The software follows these steps to generate a semantic search database:
+- Using a system prompt and list of topics, a local LLM generates a set of archival data documents.
+- A chunking strategy is applied to break the archival data into more focussed documents.
+- Contextualisation is applied to each chunk in order to retain the wider document's context.
+- A local text embedding model generates embeddings for each chunk, the embeddings are normalised.
+- The normalised embeddings are stored within a vector database.
+
+Once the database exists, the user can submit search queries which are converted into embeddings and then compared against the data within the vector database.
+
+This concept can form part of a Retrieval Augmented Generation (RAG) solution, where the resulting relevant documents can be passed into a LLM to support the generation of a response to the user's original query.
 
 ## :white_check_mark: Scope
 
@@ -69,7 +79,7 @@ Configure LM Studio as per the [documentation](https://lmstudio.ai/docs/app/basi
 
 Download:
 - an appropriate text embedding model,
-- an appropriate LLM model for chat completion.
+- an appropriate LLM for chat completion.
 
 > [!NOTE] 
 > You can use [community leaderboards](https://huggingface.co/spaces/OpenEvals/find-a-leaderboard) to help select appropriate models.
@@ -156,7 +166,7 @@ The system is configured to use the `game-historian.md` system prompt when gener
 
 The `ContextSectionChunkTitles` setting specifies which sections from your archival data markdown capture a useful summary of the document's content, these sections will be added to all document chunks to maintain context.
 
-The `ArchivalTopics` setting specifies topics for the generation or archival data. These topics will be passed into your chosen LLM along with the system prompt to generate archival data.
+The `ArchivalTopics` setting specifies topics for the generation of archival data. These topics will be passed into your chosen LLM along with the system prompt to generate archival data.
 
 You may choose to adjust either of these settings if you author your own system prompt or change the topics to be searched.
 
@@ -184,17 +194,16 @@ Build the projects.
 
 ## :zap: Features
 
-The software reads `.txt` files and generates embeddings for their content.
-
-The embeddings are stored within a vector database.
-
-You can submit search terms to test their similarity to the generated embeddings.
+- Creation of archival data using a local LLM.
+- Generation of normalised embeddings of archival data using local text embedding model.
+- Storage of embeddings in local vector database.
+- Submission of search queries, comparison against stored embeddings.
 
 ## :paperclip: Usage
 
 Start the [Qdrant](https://qdrant.tech/) vector database Docker container, the configuration for which is located in the `docker` directory.
 
-Start LM Studio and ensure that both your text embedding and LLM models are running:
+Start LM Studio and ensure that both your text embedding model and LLM are running:
 
 ![LM Studio](./docs/lm-studio.png)
 
