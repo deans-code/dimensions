@@ -8,16 +8,19 @@ public sealed class Embeddings : IDisposable
     private readonly ArchivalDataAccess _archivalDataAccess;
     private readonly EmbeddingGeneration _embeddingGeneration;
     private readonly VectorStorage _vectorStorage;
+    private readonly List<string> _contextSectionChunkTitles;
     private bool _disposed = false;
 
     public Embeddings(
         ArchivalDataAccess archivalDataAccess,
         EmbeddingGeneration embeddingGeneration,
-        VectorStorage vectorStorage)    
+        VectorStorage vectorStorage,
+        List<string> contextSectionChunkTitles)    
     {
         _archivalDataAccess = archivalDataAccess;
         _embeddingGeneration = embeddingGeneration;
         _vectorStorage = vectorStorage;
+        _contextSectionChunkTitles = contextSectionChunkTitles;
     }
 
     public void Dispose()
@@ -111,10 +114,13 @@ public sealed class Embeddings : IDisposable
         for (int i = 0; i < documentNames.Count; i++)
         {
             string documentName = documentNames[i];
+            string documentId = Guid.NewGuid().ToString();
 
             string value = data[documentName];
             
             List<string> chunks = ChunkMarkdownByHeadings(value);
+            
+            List<string> contextChunks = ExtractContextChunks(chunks, _contextSectionChunkTitles);
 
             foreach (string chunk in chunks)
             {                
@@ -122,8 +128,12 @@ public sealed class Embeddings : IDisposable
                 {
                     continue;
                 }
+                
+                string contextualizedChunk = AddContextToChunk(chunk, contextChunks);
 
-                AugmentedEmbedding augmentedEmbedding = await _embeddingGeneration.GetEmbeddingAsync(chunk);
+                AugmentedEmbedding augmentedEmbedding = await _embeddingGeneration.GetEmbeddingAsync(contextualizedChunk);
+                augmentedEmbedding.DocumentTitle = documentName;
+                augmentedEmbedding.DocumentId = documentId;
 
                 await _vectorStorage.StoreVectorsAsync(augmentedEmbedding, pointId);
 
@@ -139,15 +149,68 @@ public sealed class Embeddings : IDisposable
         return lines.Length <= 1 && lines.Any(l => l.TrimStart().StartsWith("#"));    
     }
 
+    private List<string> ExtractContextChunks(List<string> chunks, List<string> contextTitles)
+    {
+        var contextChunks = new List<string>();
+
+        foreach (string chunk in chunks)
+        {
+            foreach (string contextTitle in contextTitles)
+            {
+                if (ChunkMatchesTitle(chunk, contextTitle))
+                {
+                    contextChunks.Add(chunk);
+                    break;
+                }
+            }
+        }
+
+        return contextChunks;
+    }
+
+    private bool ChunkMatchesTitle(string chunk, string title)
+    {
+        string[] lines = chunk.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries);
+        
+        if (lines.Length == 0)
+        {
+            return false;
+        }
+
+        string firstLine = lines[0].Trim('#', ' ');
+        
+        return firstLine.Equals(title, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string AddContextToChunk(string chunk, List<string> contextChunks)
+    {
+        if (contextChunks.Count == 0)
+        {
+            return chunk;
+        }
+
+        var chunksToAdd = new List<string>();
+
+        foreach (string contextChunk in contextChunks)
+        {            
+            if (!chunk.Contains(contextChunk, StringComparison.OrdinalIgnoreCase))
+            {
+                chunksToAdd.Add(contextChunk);
+            }
+        }
+
+        if (chunksToAdd.Count == 0)
+        {
+            return chunk;
+        }
+        
+        string context = string.Join(Environment.NewLine + Environment.NewLine, chunksToAdd);
+        
+        return context + Environment.NewLine + Environment.NewLine + chunk;
+    }
+
     public async Task DeleteEmbeddingsAsync()
     {
         await _vectorStorage.DeleteCollectionAsync();
-    }
-
-    public async Task<List<SearchResult>> FindMatchesAsync(string queryText)
-    {
-        AugmentedEmbedding augmentedEmbedding = await _embeddingGeneration.GetEmbeddingAsync(queryText);
-
-        return await _vectorStorage.SearchAsync(augmentedEmbedding, 5);
     }
 }

@@ -7,6 +7,10 @@ public sealed class AugmentedEmbedding
     public required string Text { get; set; }
 
     public required EmbeddingResponse? Embedding { get; set; }
+
+    public string DocumentTitle { get; set; } = string.Empty;
+
+    public string DocumentId { get; set; } = string.Empty;
 }
 
 public sealed class EmbeddingResponse

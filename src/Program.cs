@@ -61,7 +61,21 @@ public sealed class Program
                             return new ArchivalDataAccess(settings.DataDirectory);
                         });
 
-                        services.AddSingleton<Embeddings>();
+                        _ = services.AddSingleton(provider =>
+                        {
+                            var settings = provider.GetRequiredService<AppSettings>();
+                            var archivalDataAccess = provider.GetRequiredService<ArchivalDataAccess>();
+                            var embeddingGeneration = provider.GetRequiredService<EmbeddingGeneration>();
+                            var vectorStorage = provider.GetRequiredService<VectorStorage>();
+                            
+                            return new Embeddings(
+                                archivalDataAccess,
+                                embeddingGeneration,
+                                vectorStorage,
+                                settings.Contextualisation.ContextSectionChunkTitles);
+                        });
+                        
+                        services.AddSingleton<Search>();
                         services.AddSingleton<ArchivalData>();
 
                         services.AddHostedService<ConsoleService>();

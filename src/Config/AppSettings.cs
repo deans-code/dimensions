@@ -7,6 +7,7 @@ public sealed class AppSettings
     public VectorDatabaseSettings VectorDatabaseApi { get; set; } = new();
     public string DataDirectory { get; set; } = string.Empty;
     public string SystemPromptPath { get; set; } = string.Empty;
+    public ContextualisationSettings Contextualisation { get; set; } = new();
     public List<string> ArchivalTopics { get; set; } = new();
 }
 
@@ -31,4 +32,9 @@ public sealed class VectorDatabaseSettings
     public string Host { get; set; } = string.Empty;
     public int Port { get; set; } = 0;
     public string CollectionName { get; set; } = string.Empty;
+}
+
+public sealed class ContextualisationSettings
+{
+    public List<string> ContextSectionChunkTitles { get; set; } = new();
 }

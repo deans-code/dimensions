@@ -1,6 +1,7 @@
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using Dimensions.Domain;
+using Dimensions.Infrastructure.Exceptions;
 
 namespace Dimensions.Infrastructure;
 
@@ -58,10 +59,7 @@ public sealed class VectorStorage : IDisposable
         }
         catch (Grpc.Core.RpcException ex)
         {
-            throw new InvalidOperationException(
-                "Cannot connect to vector database (Qdrant). " +
-                "Please ensure the vector database is running. " +
-                $"Details: {ex.Status.Detail}", ex);
+            throw new VectorDatabaseConnectionException(ex.Status.Detail, ex);
         }
     }
 
@@ -77,10 +75,7 @@ public sealed class VectorStorage : IDisposable
         }
         catch (Grpc.Core.RpcException ex)
         {
-            throw new InvalidOperationException(
-                "Cannot connect to vector database (Qdrant). " +
-                "Please ensure the vector database is running. " +
-                $"Details: {ex.Status.Detail}", ex);
+            throw new VectorDatabaseConnectionException(ex.Status.Detail, ex);
         }
     }
 
@@ -98,6 +93,8 @@ public sealed class VectorStorage : IDisposable
                 Vectors = vectors,
                 Payload = {
                     ["text"] = augmentedEmbedding.Text,
+                    ["documentTitle"] = augmentedEmbedding.DocumentTitle,
+                    ["documentId"] = augmentedEmbedding.DocumentId,
                 }
             };
 
@@ -108,10 +105,7 @@ public sealed class VectorStorage : IDisposable
         }
         catch (Grpc.Core.RpcException ex)
         {
-            throw new InvalidOperationException(
-                "Cannot connect to vector database (Qdrant). " +
-                "Please ensure the vector database is running. " +
-                $"Details: {ex.Status.Detail}", ex);
+            throw new VectorDatabaseConnectionException(ex.Status.Detail, ex);
         }
     }
 
@@ -123,23 +117,29 @@ public sealed class VectorStorage : IDisposable
 
             if (vectors == null) return new List<SearchResult>();
 
+            // Request more results to account for duplicates
+            int maxSearchResults = resultCount * 10;
+            
             IReadOnlyList<ScoredPoint> searchResult = await _client.SearchAsync(
                 collectionName: _collectionName,
                 vector: vectors,
-                limit: (ulong)resultCount);
+                limit: (ulong)maxSearchResults);
 
-            return [.. searchResult.Select(x => new SearchResult
-            {
-                Scored = x.Score,
-                Text = x.Payload["text"].ToString()
-            })];        
+            return [.. searchResult
+                .Select(x => new SearchResult
+                {
+                    Scored = x.Score,
+                    Text = x.Payload["text"].ToString(),
+                    DocumentTitle = x.Payload.ContainsKey("documentTitle") ? x.Payload["documentTitle"].ToString() : string.Empty,
+                    DocumentId = x.Payload.ContainsKey("documentId") ? x.Payload["documentId"].ToString() : string.Empty
+                })
+                .GroupBy(r => r.DocumentTitle)
+                .Select(g => g.MaxBy(r => r.Scored)!)
+                .Take(resultCount)];        
         }
         catch (Grpc.Core.RpcException ex)
         {
-            throw new InvalidOperationException(
-                "Cannot connect to vector database (Qdrant). " +
-                "Please ensure the vector database is running. " +
-                $"Details: {ex.Status.Detail}", ex);
+            throw new VectorDatabaseConnectionException(ex.Status.Detail, ex);
         }
     }
 }

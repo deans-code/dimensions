@@ -9,16 +9,19 @@ public sealed class ConsoleService : BackgroundService
 {
     private readonly Embeddings _embeddings;
     private readonly ArchivalData _archivalData;
+    private readonly Search _search;
     private readonly AppSettings _appSettings;
     private bool _disposed = false;
 
     public ConsoleService(
         Embeddings embeddings,
         ArchivalData archivalData,
+        Search search,
         AppSettings appSettings)
     {
         _embeddings = embeddings;
         _archivalData = archivalData;
+        _search = search;
         _appSettings = appSettings;
     }
     
@@ -37,6 +40,7 @@ public sealed class ConsoleService : BackgroundService
         {            
             _embeddings?.Dispose();
             _archivalData?.Dispose();
+            _search?.Dispose();
         }
         
         _disposed = true;        
@@ -109,7 +113,7 @@ public sealed class ConsoleService : BackgroundService
             return;
         }
 
-        var result = await _embeddings.FindMatchesAsync(userInput);
+        var result = await _search.FindMatchesAsync(userInput);
 
         if (result.Count == 0)
         {
@@ -120,8 +124,7 @@ public sealed class ConsoleService : BackgroundService
         foreach (var match in result)
         {
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine($"Score: {match.Scored:F4} | Text:");
-            Console.WriteLine(match.Text);
+            Console.WriteLine($"Score: {match.Scored:F4} | Document: {match.DocumentTitle}");
             Console.WriteLine("--------------------------------------------------");
             Console.WriteLine();
         }
