@@ -1,4 +1,6 @@
 using Dimensions.Business;
+using Dimensions.Config;
+using Dimensions.Interface.Exceptions;
 using Microsoft.Extensions.Hosting;
 
 namespace Dimensions.Interface;
@@ -6,11 +8,18 @@ namespace Dimensions.Interface;
 public sealed class ConsoleService : BackgroundService
 {
     private readonly Embeddings _embeddings;
+    private readonly ArchivalData _archivalData;
+    private readonly AppSettings _appSettings;
     private bool _disposed = false;
 
-    public ConsoleService(Embeddings embeddings)
+    public ConsoleService(
+        Embeddings embeddings,
+        ArchivalData archivalData,
+        AppSettings appSettings)
     {
         _embeddings = embeddings;
+        _archivalData = archivalData;
+        _appSettings = appSettings;
     }
     
     public override void Dispose()
@@ -27,6 +36,7 @@ public sealed class ConsoleService : BackgroundService
         if (disposing)
         {            
             _embeddings?.Dispose();
+            _archivalData?.Dispose();
         }
         
         _disposed = true;        
@@ -47,7 +57,8 @@ public sealed class ConsoleService : BackgroundService
             Console.WriteLine("1. Enter search text");
             Console.WriteLine("2. Create vector database from data files");
             Console.WriteLine("3. Delete vector database");
-            Console.WriteLine("4. Exit application");
+            Console.WriteLine("4. Create archival data files");
+            Console.WriteLine("5. Exit application");
             Console.Write("Your choice: ");
 
             string? choice = Console.ReadLine();
@@ -64,6 +75,9 @@ public sealed class ConsoleService : BackgroundService
                     await DeleteVectorDatabase();
                     break;
                 case "4":
+                    await CreateArchivalDataFiles();
+                    break;
+                case "5":
                     continueRunning = false;
                     Console.WriteLine("Closing application.");
                     break;
@@ -81,7 +95,7 @@ public sealed class ConsoleService : BackgroundService
         Console.WriteLine();
         Console.Write("Enter your search query (or 'back' to return to main menu): ");
 
-        string userInput = Console.ReadLine();
+        string? userInput = Console.ReadLine();
 
         if (string.IsNullOrWhiteSpace(userInput))
         {
@@ -134,6 +148,31 @@ public sealed class ConsoleService : BackgroundService
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting vector database: {ex.Message}");
+        }
+    }
+
+    private async Task CreateArchivalDataFiles()
+    {
+        try
+        {
+            string promptPath = Path.Combine(Directory.GetCurrentDirectory(), "prompts", "game-historian.md");
+            
+            if (!File.Exists(promptPath))
+            {
+                throw new ArchivalDataFilesCreationException($"System prompt file not found: {promptPath}");
+            }
+
+            string systemPrompt = await File.ReadAllTextAsync(promptPath);            
+            
+            await _archivalData.CreateArchivalDataFilesAsync(_appSettings.ArchivalTopics, systemPrompt);                        
+        }
+        catch (ArchivalDataFilesCreationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ArchivalDataFilesCreationException(ex.Message, ex);
         }
     }
 }

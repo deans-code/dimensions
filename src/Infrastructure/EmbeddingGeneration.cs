@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Dimensions.Domain;
+using Dimensions.Infrastructure.Exceptions;
 
 namespace Dimensions.Infrastructure;
 
@@ -45,28 +46,6 @@ public sealed class EmbeddingGeneration : IDisposable
         Dispose(false);
     }
 
-    public async Task CheckAvailabilityAsync()
-    {
-        try
-        {
-            HttpResponseMessage response = await _httpClient.GetAsync($"{_baseUrl}/v1/models");
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new InvalidOperationException(
-                    $"Embedding service is not available at {_baseUrl}. " +
-                    $"Status code: {response.StatusCode}. " +
-                    "Please ensure the embedding model is running.");
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new InvalidOperationException(
-                $"Cannot connect to embedding service at {_baseUrl}. " +
-                "Please ensure the embedding model is running.", ex);
-        }
-    }
-
     public async Task<AugmentedEmbedding> GetEmbeddingAsync(string inputText)
     {
         try
@@ -83,9 +62,7 @@ public sealed class EmbeddingGeneration : IDisposable
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(
-                    $"Failed to generate embedding. Status code: {response.StatusCode}. " +
-                    "Please ensure the embedding model is running.");
+                throw new EmbeddingGenerationFailedException((int)response.StatusCode);
             }
 
             string responseJson = await response.Content.ReadAsStringAsync();
@@ -94,7 +71,7 @@ public sealed class EmbeddingGeneration : IDisposable
 
             if (embedding == null)
             {
-                throw new InvalidOperationException("Failed to deserialize embedding response.");
+                throw new EmbeddingDeserializationException();
             }
 
             Normalise(embedding);
@@ -107,14 +84,11 @@ public sealed class EmbeddingGeneration : IDisposable
         }
         catch (HttpRequestException ex)
         {
-            throw new InvalidOperationException(
-                $"Cannot connect to embedding service at {_baseUrl}. " +
-                "Please ensure the embedding model is running.", ex);
+            throw new EmbeddingServiceConnectionException(_baseUrl, ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException(
-                $"Error getting embedding: {ex.Message}", ex);
+            throw new EmbeddingOperationException(ex.Message, ex);
         }
     }
 

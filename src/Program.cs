@@ -48,10 +48,21 @@ public sealed class Program
                         _ = services.AddSingleton(provider =>
                         {
                             var settings = provider.GetRequiredService<AppSettings>();
-                            return new RawDataLoading(settings.DataDirectory);
+                            return new ChatCompletionGeneration(
+                                settings.ChatCompletionApi.Protocol,
+                                settings.ChatCompletionApi.Host,
+                                settings.ChatCompletionApi.Port,
+                                settings.ChatCompletionApi.Model);
+                        });
+
+                        _ = services.AddSingleton(provider =>
+                        {
+                            var settings = provider.GetRequiredService<AppSettings>();
+                            return new ArchivalDataAccess(settings.DataDirectory);
                         });
 
                         services.AddSingleton<Embeddings>();
+                        services.AddSingleton<ArchivalData>();
 
                         services.AddHostedService<ConsoleService>();
                     })

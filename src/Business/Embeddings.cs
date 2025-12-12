@@ -5,17 +5,17 @@ namespace Dimensions.Business;
 
 public sealed class Embeddings : IDisposable
 {    
-    private readonly RawDataLoading _rawDataLoader;
+    private readonly ArchivalDataAccess _archivalDataAccess;
     private readonly EmbeddingGeneration _embeddingGeneration;
     private readonly VectorStorage _vectorStorage;
     private bool _disposed = false;
 
     public Embeddings(
-        RawDataLoading rawDataLoading,
+        ArchivalDataAccess archivalDataAccess,
         EmbeddingGeneration embeddingGeneration,
         VectorStorage vectorStorage)    
     {
-        _rawDataLoader = rawDataLoading;
+        _archivalDataAccess = archivalDataAccess;
         _embeddingGeneration = embeddingGeneration;
         _vectorStorage = vectorStorage;
     }
@@ -96,9 +96,7 @@ public sealed class Embeddings : IDisposable
 
     public async Task CreateEmbeddingsAsync()
     {        
-        await _embeddingGeneration.CheckAvailabilityAsync();
-
-        Dictionary<string, string> data = await _rawDataLoader.LoadAllTxtFilesAsync();
+        Dictionary<string, string> data = await _archivalDataAccess.LoadAllMarkdownFilesAsync();
 
         if (data.Count == 0)
         {
