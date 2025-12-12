@@ -29,7 +29,7 @@ public sealed class Program
                         _ = services.AddSingleton(provider =>
                         {
                             var settings = provider.GetRequiredService<AppSettings>();
-                            return new VectorStorage(
+                            return new VectorDataAccess(
                                 settings.VectorDatabaseApi.Host,
                                 settings.VectorDatabaseApi.Port,
                                 settings.VectorDatabaseApi.CollectionName);
@@ -66,7 +66,7 @@ public sealed class Program
                             var settings = provider.GetRequiredService<AppSettings>();
                             var archivalDataAccess = provider.GetRequiredService<ArchivalDataAccess>();
                             var embeddingGeneration = provider.GetRequiredService<EmbeddingGeneration>();
-                            var vectorStorage = provider.GetRequiredService<VectorStorage>();
+                            var vectorStorage = provider.GetRequiredService<VectorDataAccess>();
                             
                             return new Embeddings(
                                 archivalDataAccess,

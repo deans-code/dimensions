@@ -7,19 +7,19 @@ public sealed class Embeddings : IDisposable
 {    
     private readonly ArchivalDataAccess _archivalDataAccess;
     private readonly EmbeddingGeneration _embeddingGeneration;
-    private readonly VectorStorage _vectorStorage;
+    private readonly VectorDataAccess _vectorDataAccess;
     private readonly List<string> _contextSectionChunkTitles;
     private bool _disposed = false;
 
     public Embeddings(
         ArchivalDataAccess archivalDataAccess,
         EmbeddingGeneration embeddingGeneration,
-        VectorStorage vectorStorage,
+        VectorDataAccess vectorDataAccess,
         List<string> contextSectionChunkTitles)    
     {
         _archivalDataAccess = archivalDataAccess;
         _embeddingGeneration = embeddingGeneration;
-        _vectorStorage = vectorStorage;
+        _vectorDataAccess = vectorDataAccess;
         _contextSectionChunkTitles = contextSectionChunkTitles;
     }
 
@@ -36,7 +36,7 @@ public sealed class Embeddings : IDisposable
         if (disposing)
         {
             _embeddingGeneration?.Dispose();
-            _vectorStorage?.Dispose();
+            _vectorDataAccess?.Dispose();
         }
         
         _disposed = true;        
@@ -106,7 +106,7 @@ public sealed class Embeddings : IDisposable
             return;
         }        
 
-        await _vectorStorage.CreateCollectionAsync();
+        await _vectorDataAccess.CreateCollectionAsync();
 
         var documentNames = new List<string>(data.Keys);
         ulong pointId = 1;
@@ -135,7 +135,7 @@ public sealed class Embeddings : IDisposable
                 augmentedEmbedding.DocumentTitle = documentName;
                 augmentedEmbedding.DocumentId = documentId;
 
-                await _vectorStorage.StoreVectorsAsync(augmentedEmbedding, pointId);
+                await _vectorDataAccess.StoreVectorsAsync(augmentedEmbedding, pointId);
 
                 pointId++;
             }
@@ -211,6 +211,6 @@ public sealed class Embeddings : IDisposable
 
     public async Task DeleteEmbeddingsAsync()
     {
-        await _vectorStorage.DeleteCollectionAsync();
+        await _vectorDataAccess.DeleteCollectionAsync();
     }
 }

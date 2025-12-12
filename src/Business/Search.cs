@@ -6,15 +6,15 @@ namespace Dimensions.Business;
 public sealed class Search : IDisposable
 {
     private readonly EmbeddingGeneration _embeddingGeneration;
-    private readonly VectorStorage _vectorStorage;
+    private readonly VectorDataAccess _vectorDataAccess;
     private bool _disposed = false;
 
     public Search(
         EmbeddingGeneration embeddingGeneration,
-        VectorStorage vectorStorage)
+        VectorDataAccess vectorDataAccess)
     {
         _embeddingGeneration = embeddingGeneration;
-        _vectorStorage = vectorStorage;
+        _vectorDataAccess = vectorDataAccess;
     }
 
     public void Dispose()
@@ -30,7 +30,7 @@ public sealed class Search : IDisposable
         if (disposing)
         {
             _embeddingGeneration?.Dispose();
-            _vectorStorage?.Dispose();
+            _vectorDataAccess?.Dispose();
         }
 
         _disposed = true;
@@ -45,6 +45,6 @@ public sealed class Search : IDisposable
     {
         AugmentedEmbedding augmentedEmbedding = await _embeddingGeneration.GetEmbeddingAsync(queryText);
 
-        return await _vectorStorage.SearchAsync(augmentedEmbedding, 5);
+        return await _vectorDataAccess.SearchAsync(augmentedEmbedding, 5);
     }
 }

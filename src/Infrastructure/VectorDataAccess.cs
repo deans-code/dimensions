@@ -5,13 +5,13 @@ using Dimensions.Infrastructure.Exceptions;
 
 namespace Dimensions.Infrastructure;
 
-public sealed class VectorStorage : IDisposable
+public sealed class VectorDataAccess : IDisposable
 {
     private readonly QdrantClient _client;
     private readonly string _collectionName;
     private bool _disposed = false;
 
-    public VectorStorage(
+    public VectorDataAccess(
         string host,
         int port,
         string collectionName)
@@ -38,7 +38,7 @@ public sealed class VectorStorage : IDisposable
         _disposed = true;        
     }
 
-    ~VectorStorage()
+    ~VectorDataAccess()
     {
         Dispose(false);
     }
