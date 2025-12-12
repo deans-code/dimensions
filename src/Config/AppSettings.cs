@@ -6,6 +6,7 @@ public sealed class AppSettings
     public ChatCompletionApiSettings ChatCompletionApi { get; set; } = new();
     public VectorDatabaseSettings VectorDatabaseApi { get; set; } = new();
     public string DataDirectory { get; set; } = string.Empty;
+    public string SystemPromptPath { get; set; } = string.Empty;
     public List<string> ArchivalTopics { get; set; } = new();
 }
 

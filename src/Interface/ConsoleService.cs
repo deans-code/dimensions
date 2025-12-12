@@ -54,10 +54,10 @@ public sealed class ConsoleService : BackgroundService
         while (continueRunning)
         {
             Console.WriteLine("Choose an option:");
-            Console.WriteLine("1. Enter search text");
-            Console.WriteLine("2. Create vector database from data files");
-            Console.WriteLine("3. Delete vector database");
-            Console.WriteLine("4. Create archival data files");
+            Console.WriteLine("1. Create archival data files");
+            Console.WriteLine("2. Delete vector database");
+            Console.WriteLine("3. Create vector database from data files");
+            Console.WriteLine("4. Enter search text");
             Console.WriteLine("5. Exit application");
             Console.Write("Your choice: ");
 
@@ -66,16 +66,16 @@ public sealed class ConsoleService : BackgroundService
             switch (choice)
             {
                 case "1":
-                    await Search();
+                    await CreateArchivalDataFiles();
                     break;
                 case "2":
-                    await CreateVectorDatabase();
-                    break;
-                case "3":
                     await DeleteVectorDatabase();
                     break;
+                case "3":
+                    await CreateVectorDatabase();
+                    break;
                 case "4":
-                    await CreateArchivalDataFiles();
+                    await Search();
                     break;
                 case "5":
                     continueRunning = false;
@@ -155,7 +155,7 @@ public sealed class ConsoleService : BackgroundService
     {
         try
         {
-            string promptPath = Path.Combine(Directory.GetCurrentDirectory(), "prompts", "game-historian.md");
+            string promptPath = Path.Combine(Directory.GetCurrentDirectory(), _appSettings.SystemPromptPath);
             
             if (!File.Exists(promptPath))
             {

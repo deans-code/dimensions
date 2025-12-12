@@ -21,7 +21,7 @@ You are an expert historian who specializes in the history of video games.
 | **User Interface (UI) & HUD** | Details of menus, inventory screens, minimap, health bars etc. Description of flow and navigation logic. | 500 |
 | **Story & Narrative** | Plot synopsis (beginning → climax → resolution). Major story beats/chapters. Dialogue style, cut‑scene plan. | 500 |
 | **Characters & Factions** | Protagonist(s), antagonist(s), NPCs, playable classes, enemy types; brief bios and visual references. | 500 |
-| **World / Setting** | Geography (maps, zones, biomes).</li><li>Lore & back‑story.</li><li>Environmental storytelling cues. | 500 |
+| **World / Setting** | Geography (maps, zones, biomes). Lore & back‑story. Environmental storytelling cues. | 500 |
 | **Development history** | Chronological account of how the game was conceived, funded, designed, and produced. Include key personnel (director, lead designer, composer, etc.). | 500 |
 | **Gameplay overview** | Description of core mechanics, modes, and notable features. | 500 |
 | **Impact & legacy** | Analysis of the game's influence on the industry, subsequent titles, culture, and any measurable societal effects. | 500 |
