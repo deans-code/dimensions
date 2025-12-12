@@ -164,13 +164,13 @@ Related settings:
 
 ```json
 {
-  "Contextualisation": {
+   "Contextualisation": {
     "ContextSectionChunkTitles": [
-      // A list of titles, see system prompt for expected titles.
+      "A title defined by your system prompt's template"      
     ]
   },
   "ArchivalTopics": [
-    // A list of topics related to the chosen system prompt.
+    "A related topic which can be processed by the system prompt"    
   ]
 }
 ```
